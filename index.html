@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>matercord â€” audio & media converters</title>
+<meta name="description" content="Free online converters for audio and media. Convert YouTube to WAV, MP3, and more. Fast, free, no signup.">
+
+<!-- SEO / Google -->
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://matercord.com/">
+
+<!-- Open Graph -->
+<meta property="og:title" content="matercord â€” audio & media converters">
+<meta property="og:description" content="Free online converters. YouTube to WAV, MP3, and more.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://matercord.com/">
+
+<!-- Schema.org structured data for Google -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "matercord",
+  "url": "https://matercord.com",
+  "description": "Free online audio and media converters. YouTube to WAV, MP3",
+  "potentialAction": [
+    {
+      "@type": "SearchAction",
+      "target": "https://matercord.com/?q={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  ],
+  "hasPart": [
+    {
+      "@type": "WebPage",
+      "name": "YouTube to WAV Converter",
+      "url": "https://wav.matercord.com",
+      "description": "Convert YouTube videos to WAV audio format for free"
+    },
+    {
+      "@type": "WebPage",
+      "name": "YouTube to MP3 Converter",
+      "url": "https://mp3.matercord.com",
+      "description": "Convert YouTube videos to MP3 audio format for free"
+    }
+  ]
+}
+</script>
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap');
+
+  :root {
+    --bg: #111110;
+    --card: #1a1a18;
+    --card-hover: #1f1f1d;
+    --border: #2a2a27;
+    --accent: #c8f135;
+    --accent2: #f1d035;
+    --accent3: #35f1a0;
+    --accent4: #f17035;
+    --text: #e8e8e0;
+    --muted: #666660;
+    --mono: 'Space Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Noise texture overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 999;
+    opacity: 0.4;
+  }
+
+  /* â”€â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 28px 48px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo {
+    font-family: var(--mono);
+    font-size: 18px;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    text-decoration: none;
+  }
+
+  .logo span { color: var(--accent); }
+
+  nav {
+    display: flex;
+    gap: 32px;
+  }
+
+  nav a {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  nav a:hover { color: var(--text); }
+
+  /* â”€â”€â”€ Hero â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  .hero {
+    padding: 80px 48px 48px;
+    max-width: 900px;
+  }
+
+  .hero-eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 20px;
+    opacity: 0;
+    animation: fadeUp 0.6s ease forwards 0.1s;
+  }
+
+  .hero h1 {
+    font-size: clamp(42px, 7vw, 80px);
+    font-weight: 800;
+    line-height: 0.95;
+    letter-spacing: -0.04em;
+    margin-bottom: 24px;
+    opacity: 0;
+    animation: fadeUp 0.6s ease forwards 0.2s;
+  }
+
+  .hero h1 em {
+    font-style: normal;
+    color: var(--accent);
+  }
+
+  .hero p {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.7;
+    max-width: 480px;
+    opacity: 0;
+    animation: fadeUp 0.6s ease forwards 0.35s;
+  }
+
+  /* â”€â”€â”€ Grid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  .section-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 0 48px;
+    margin-bottom: 20px;
+    opacity: 0;
+    animation: fadeUp 0.6s ease forwards 0.45s;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 2px;
+    padding: 0 48px 80px;
+  }
+
+  /* â”€â”€â”€ Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 32px 28px 28px;
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    position: relative;
+    overflow: hidden;
+    transition: background 0.25s, border-color 0.25s, transform 0.25s;
+    opacity: 0;
+    animation: fadeUp 0.5s ease forwards;
+  }
+
+  .card:nth-child(1) { animation-delay: 0.5s; }
+  .card:nth-child(2) { animation-delay: 0.6s; }
+
+  .card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--card-accent, var(--accent));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s ease;
+  }
+
+  .card:hover {
+    background: var(--card-hover);
+    border-color: #3a3a37;
+    transform: translateY(-2px);
+  }
+
+  .card:hover::after { transform: scaleX(1); }
+
+  .card-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--card-accent, var(--accent));
+    background: color-mix(in srgb, var(--card-accent, var(--accent)) 10%, transparent);
+    padding: 4px 10px;
+    border-radius: 2px;
+    width: fit-content;
+  }
+
+  .card-title {
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1;
+    font-family: var(--mono);
+  }
+
+  .card-title .from { color: var(--text); }
+  .card-title .arrow { color: var(--muted); margin: 0 4px; font-weight: 400; }
+  .card-title .to { color: var(--card-accent, var(--accent)); }
+
+  .card-desc {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.7;
+    flex: 1;
+  }
+
+  .card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    margin-top: auto;
+  }
+
+  .card-url {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  .card-arrow {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--card-accent, var(--accent)) 15%, transparent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--card-accent, var(--accent));
+    font-size: 14px;
+    transition: background 0.2s, transform 0.2s;
+  }
+
+  .card:hover .card-arrow {
+    background: var(--card-accent, var(--accent));
+    color: #111;
+    transform: rotate(45deg);
+  }
+
+  /* â”€â”€â”€ Footer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 32px 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  footer p {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  footer a {
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  footer a:hover { color: var(--accent); }
+
+  /* â”€â”€â”€ Animations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* â”€â”€â”€ Responsive â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  @media (max-width: 640px) {
+    header { padding: 20px 24px; }
+    nav { display: none; }
+    .hero { padding: 48px 24px 32px; }
+    .section-label { padding: 0 24px; }
+    .grid { padding: 0 24px 48px; grid-template-columns: 1fr; }
+    footer { padding: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <a href="/" class="logo">mater<span>cord</span></a>
+  <nav>
+    <a href="#converters">Converters</a>
+    <a href="mailto:hello@matercord.com">Contact</a>
+  </nav>
+</header>
+
+<section class="hero">
+  <p class="hero-eyebrow">// free online tools</p>
+  <h1>Convert<br><em>anything.</em></h1>
+  <p>A suite of fast, free media converters.. Just paste a link.</p>
+</section>
+
+<p class="section-label" id="converters">// 0x00 â€” available converters</p>
+
+<div class="grid">
+
+  <!-- WAV -->
+  <a href="/wav" class="card" style="--card-accent: #c8f135;">
+    <span class="card-badge">&#9679; Live</span>
+    <div class="card-title">
+      <span class="from">yt</span>
+      <span class="arrow">â†’</span>
+      <span class="to">wav</span>
+    </div>
+    <p class="card-desc">Extract lossless WAV audio from any YouTube video. Full quality, no compression.</p>
+    <div class="card-footer">
+      <span class="card-url">matercord.com/wav</span>
+      <span class="card-arrow">â†—</span>
+    </div>
+  </a>
+
+  <!-- MP3 -->
+  <a href="/mp3" class="card" style="--card-accent: #f1d035;">
+    <span class="card-badge">&#9679; Live</span>
+    <div class="card-title">
+      <span class="from">yt</span>
+      <span class="arrow">â†’</span>
+      <span class="to">mp3</span>
+    </div>
+    <p class="card-desc">Convert YouTube videos to high-quality MP3 download instantly.</p>
+    <div class="card-footer">
+      <span class="card-url">matercord.com/mp3</span>
+      <span class="card-arrow">â†—</span>
+    </div>
+  </a>
+
+</div>
+
+<footer>
+  <p>Â© 2025 matercord â€” free media tools</p>
+  <p>powered by <a href="#">pi</a> &nbsp;Â·&nbsp; <a href="#">privacy</a> &nbsp;Â·&nbsp; <a href="#">terms</a></p>
+</footer>
+
+</body>
+</html>
