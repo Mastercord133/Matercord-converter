@@ -1,19 +1,25 @@
 #!/bin/bash
 
 if ! command -v ffmpeg &> /dev/null; then
-  echo "â†’ Installing ffmpeg..."
+  echo "→ Installing ffmpeg..."
   sudo apt install -y ffmpeg -q
 fi
 
 if [ ! -d "venv" ]; then
-  echo "â†’ Creating virtual environment..."
+  echo "→ Creating virtual environment..."
   python3 -m venv venv
 fi
 
-echo "â†’ Installing dependencies..."
+echo "→ Installing dependencies..."
 venv/bin/pip install -r requirements.txt -q
 
-echo "â†’ Starting matercord..."
-venv/bin/python app.py
+echo "→ Starting matercord (audio)..."
+venv/bin/python app.py &
 
+echo "→ Starting matercord (mp4)..."
+venv/bin/python mp4.py &
 
+echo "✓ Running on http://localhost:5010 — Press Ctrl+C to stop"
+
+trap "echo '→ Shutting down...'; kill 0; exit 0" SIGINT SIGTERM
+wait

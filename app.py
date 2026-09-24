@@ -1,4 +1,5 @@
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, jsonify, send_file, Response, stream_with_context
+import requests as http
 import yt_dlp
 import os
 import uuid
@@ -12,7 +13,7 @@ os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 
 jobs = {}
 
-# Conversion worker
+# ── Conversion worker ─────────────────────────────
 def convert(job_id, url, fmt):
     jobs[job_id]['status'] = 'downloading'
     out_path = os.path.join(DOWNLOAD_DIR, f'{job_id}.{fmt}')
@@ -28,7 +29,7 @@ def convert(job_id, url, fmt):
             jobs[job_id]['pct'] = 85
             jobs[job_id]['status'] = 'converting'
 
-    base_opts = {
+    audio_opts = {
         'outtmpl': os.path.join(DOWNLOAD_DIR, f'{job_id}.%(ext)s'),
         'progress_hooks': [progress_hook],
         'quiet': True,
@@ -38,13 +39,25 @@ def convert(job_id, url, fmt):
         'http_headers': {
             'User-Agent': 'com.google.android.youtube/17.36.4 (Linux; U; Android 12; GB) gzip',
         },
+    }
+
+    video_opts = {
+        'outtmpl': os.path.join(DOWNLOAD_DIR, f'{job_id}.%(ext)s'),
+        'progress_hooks': [progress_hook],
+        'quiet': True,
+        'no_warnings': True,
+        'concurrent_fragment_downloads': 4,
+        'extractor_args': {'youtube': {'player_client': ['web']}},
+        'http_headers': {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        },
         **(({'cookiefile': cookies_path}) if os.path.exists(cookies_path) else {}),
     }
-#mp4
+
     if fmt == 'mp4':
         ydl_opts = {
-            **base_opts,
-            'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best',
+            **video_opts,
+            'format': 'bestvideo[height<=1080]+bestaudio[language=en-US]/bestvideo[height<=1080]+bestaudio/bestvideo+bestaudio/best',
             'merge_output_format': 'mp4',
             'postprocessors': [{
                 'key': 'FFmpegVideoConvertor',
@@ -53,7 +66,7 @@ def convert(job_id, url, fmt):
         }
     else:
         ydl_opts = {
-            **base_opts,
+            **audio_opts,
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': fmt,
@@ -69,13 +82,13 @@ def convert(job_id, url, fmt):
     except Exception as e:
         jobs[job_id].update({'status': 'error', 'error': str(e)})
 
-# â”€â”€ Long-lived cookie on every response â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── Long-lived cookie on every response ───────────
 @app.after_request
 def long_cookie(resp):
     resp.set_cookie('mc', '1', max_age=365 * 24 * 60 * 60, samesite='Lax', path='/')
     return resp
 
-# â”€â”€ Shared CSS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── Shared CSS ────────────────────────────────────
 STYLE = """
 @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap');
 :root{--bg:#111110;--card:#1a1a18;--card-hover:#1f1f1d;--border:#2a2a27;--accent:#c8f135;--text:#e8e8e0;--muted:#666660;--mono:'Space Mono',monospace;--sans:'Syne',sans-serif;}
@@ -97,7 +110,8 @@ def shell(title, body, active='', extra=''):
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>{title} â€” matercord</title>
+<link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+CiAgPHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNiIgZmlsbD0iIzFhMWExOCIvPgogIDxyZWN0IHg9IjQiIHk9IjEzIiB3aWR0aD0iMyIgaGVpZ2h0PSI2IiByeD0iMS41IiBmaWxsPSIjYzhmMTM1Ii8+CiAgPHJlY3QgeD0iOSIgeT0iOSIgd2lkdGg9IjMiIGhlaWdodD0iMTQiIHJ4PSIxLjUiIGZpbGw9IiNjOGYxMzUiLz4KICA8cmVjdCB4PSIxNCIgeT0iNSIgd2lkdGg9IjMiIGhlaWdodD0iMjIiIHJ4PSIxLjUiIGZpbGw9IiNjOGYxMzUiLz4KICA8cmVjdCB4PSIxOSIgeT0iOSIgd2lkdGg9IjMiIGhlaWdodD0iMTQiIHJ4PSIxLjUiIGZpbGw9IiNjOGYxMzUiLz4KICA8cmVjdCB4PSIyNCIgeT0iMTMiIHdpZHRoPSIzIiBoZWlnaHQ9IjYiIHJ4PSIxLjUiIGZpbGw9IiNjOGYxMzUiLz4KPC9zdmc+" type="image/svg+xml">
+<title>{title} — matercord</title>
 <style>{STYLE}{extra}</style>
 </head>
 <body>
@@ -110,10 +124,10 @@ def shell(title, body, active='', extra=''):
   </nav>
 </header>
 {body}
-<footer><span>Â© 2025 matercord</span><span>powered by pi</span></footer>
+<footer><span>© 2025 matercord</span><span>powered by pi</span></footer>
 </body></html>"""
 
-# â”€â”€ Homepage â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── Homepage ──────────────────────────────────────
 @app.route('/')
 def home():
     body = """
@@ -125,21 +139,21 @@ def home():
 <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:2px;padding:0 48px 80px">
   <a href="/wav" class="hcard" style="--ca:#c8f135">
     <span class="badge" style="color:#c8f135;background:rgba(200,241,53,.1)">&#9679; Live</span>
-    <div class="ctitle"><span>yt</span><span class="arr">â†’</span><span style="color:#c8f135">wav</span></div>
+    <div class="ctitle"><span>yt</span><span class="arr">→</span><span style="color:#c8f135">wav</span></div>
     <p class="cdesc">Extract lossless WAV audio from any YouTube video.</p>
-    <div class="cfoot"><span class="curl">matercord.com/wav</span><span class="carrow" style="background:rgba(200,241,53,.15);color:#c8f135">â†—</span></div>
+    <div class="cfoot"><span class="curl">matercord.com/wav</span><span class="carrow" style="background:rgba(200,241,53,.15);color:#c8f135">↗</span></div>
   </a>
   <a href="/mp3" class="hcard" style="--ca:#f1d035">
     <span class="badge" style="color:#f1d035;background:rgba(241,208,53,.1)">&#9679; Live</span>
-    <div class="ctitle"><span>yt</span><span class="arr">â†’</span><span style="color:#f1d035">mp3</span></div>
+    <div class="ctitle"><span>yt</span><span class="arr">→</span><span style="color:#f1d035">mp3</span></div>
     <p class="cdesc">Convert YouTube to high-quality MP3. 192kbps, download instantly.</p>
-    <div class="cfoot"><span class="curl">matercord.com/mp3</span><span class="carrow" style="background:rgba(241,208,53,.15);color:#f1d035">â†—</span></div>
+    <div class="cfoot"><span class="curl">matercord.com/mp3</span><span class="carrow" style="background:rgba(241,208,53,.15);color:#f1d035">↗</span></div>
   </a>
   <a href="/mp4" class="hcard" style="--ca:#35c8f1">
     <span class="badge" style="color:#35c8f1;background:rgba(53,200,241,.1)">&#9679; Live</span>
-    <div class="ctitle"><span>yt</span><span class="arr">â†’</span><span style="color:#35c8f1">mp4</span></div>
+    <div class="ctitle"><span>yt</span><span class="arr">→</span><span style="color:#35c8f1">mp4</span></div>
     <p class="cdesc">Download YouTube videos as MP4. Best available quality.</p>
-    <div class="cfoot"><span class="curl">matercord.com/mp4</span><span class="carrow" style="background:rgba(53,200,241,.15);color:#35c8f1">â†—</span></div>
+    <div class="cfoot"><span class="curl">matercord.com/mp4</span><span class="carrow" style="background:rgba(53,200,241,.15);color:#35c8f1">↗</span></div>
   </a>
 </div>"""
     extra = """
@@ -156,7 +170,7 @@ def home():
 @media(max-width:640px){section,div[style*="padding:0 48px"]{padding-left:24px!important;padding-right:24px!important}}"""
     return shell('matercord', body, extra=extra)
 
-# â”€â”€ Converter page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── Converter page ────────────────────────────────
 CONVERTER_EXTRA = """
 .wrap{display:flex;align-items:center;justify-content:center;min-height:calc(100vh - 200px);padding:40px 24px;}
 .box{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:48px 40px 40px;width:100%;max-width:560px;}
@@ -186,7 +200,7 @@ def converter_page(fmt):
     body = f"""
 <div class="wrap">
   <div class="box">
-    <h1 style="color:{accent}">yt â†’ {fmt}</h1>
+    <h1 style="color:{accent}">yt → {fmt}</h1>
     <p class="sub">{desc}</p>
     <div class="row">
       <input type="text" id="url" placeholder="https://youtube.com/watch?v=..." />
@@ -226,7 +240,7 @@ async function check(job_id){{
   else if(d.status==='converting'){{label.textContent='Converting...';bar.style.width='90%';}}
   else if(d.status==='done'){{
     clearInterval(poll);
-    label.textContent='Done â€” '+(d.title||'');
+    label.textContent='Done — '+(d.title||'');
     bar.style.width='100%';
     const dl=document.getElementById('dl-btn');
     dl.href='/api/download/'+job_id;
@@ -242,7 +256,7 @@ async function check(job_id){{
   }}
 }}
 </script>"""
-    return shell(f'yt â†’ {fmt}', body, active=fmt,
+    return shell(f'yt → {fmt}', body, active=fmt,
                  extra=CONVERTER_EXTRA + f':root{{--accent-c:{accent}}}')
 
 @app.route('/wav')
@@ -251,10 +265,20 @@ def wav(): return converter_page('wav')
 @app.route('/mp3')
 def mp3(): return converter_page('mp3')
 
-@app.route('/mp4')
-def mp4(): return converter_page('mp4')
+@app.route('/mp4', defaults={'path': ''})
+@app.route('/mp4/<path:path>', methods=['GET', 'POST'])
+def mp4_proxy(path):
+    url = f'http://localhost:5011/{path}'
+    if request.method == 'POST':
+        resp = http.post(url, json=request.get_json(), stream=True)
+    else:
+        resp = http.get(url, stream=True)
+    excluded = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
+    headers = {k: v for k, v in resp.headers.items() if k.lower() not in excluded}
+    return Response(stream_with_context(resp.iter_content(chunk_size=8192)),
+                    status=resp.status_code, headers=headers)
 
-# â”€â”€ API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── API ────────────────────────────────────────────
 @app.route('/api/convert', methods=['POST'])
 def api_convert():
     data = request.get_json()
