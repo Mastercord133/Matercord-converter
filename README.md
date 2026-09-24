@@ -37,7 +37,7 @@ sudo apt install python3-venv ffmpeg -y
 
 **2. Clone the repo**
 ```bash
-git clone https://github.com/mastercord133/matercord.git
+git clone https://github.com/Mastercord133/Matercord-converter)
 cd matercord
 ```
 
