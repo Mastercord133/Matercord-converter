@@ -1,6 +1,6 @@
 # matercord
 
-A self-hosted YouTube converter suite running on a Raspberry Pi. Convert YouTube videos to WAV, MP3, and MP4 — no ads, no signup, no limits.
+A self-hosted YouTube converter suite running on a Raspberry Pi. 
 
 ## Converters
 
